@@ -12,7 +12,10 @@ SOURCES += main.cpp \
     vector.cpp \
     particle.cpp \
     constrain.cpp \
-    camera.cpp
+    camera.cpp \
+    cloth.cpp \
+    wind.cpp \
+    ball.cpp
 
 INCLUDEPATH += /home/gu/Qt5.5.1/5.5/gcc_64/include
 
@@ -23,4 +26,7 @@ HEADERS += \
     particle.h \
     constrain.h \
     camera.h \
-    key.h
+    key.h \
+    cloth.h \
+    wind.h \
+    ball.h

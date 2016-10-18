@@ -57,17 +57,21 @@ GLuint tex_id;
 
 
 //void satisifyConstrains(Particle &p1, Particle &p2, float distance);
-void cloth(float w, float h);
-int index(int u, int v);
-Vector3 computeNorml(const Vector3 &p1, const Vector3 &p2,const Vector3 &p3);
+int index(int u, int v);//返回质点的位置
+Vector3 computeNorml(const Vector3 &p1, const Vector3 &p2,const Vector3 &p3);//计算法向量
 
-void timefunc(int i);
-void setLight();
-void reshape(GLsizei w,GLsizei h);
-void glInit();
-void draw();
-void simulate(time_t time);
+void timefunc(int i);//刷新画面
+void setLight(); //设置光源
+void reshape(GLsizei w,GLsizei h);//
 
+/****主要的直接调用的函数****/
+void cloth(float w, float h);//创建布料的模型，包括质点与约束
+void glInit();//初始化，以及cloth函数调用，创建布料
+void draw();//绘制的回调函数，调用simulate函数，计算质点位置，将数据绘制出来。
+
+void simulate(time_t time);//计算当前时刻各个质点的合力，具体根据力计算质点位置并进行约束
+
+//键盘与鼠标函数
 void keyfunc(unsigned char key, int x, int y);
 void mousefunc(int button, int state, int x, int y);
 void motionfunc(int x, int y);
