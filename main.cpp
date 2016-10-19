@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <sstream>
 #include <math.h>
 #include <time.h>
 #include <sys/timeb.h>//to get millisec making the ball move smothly,non stand library.use kernal lib sys(in linux).
@@ -109,7 +110,23 @@ void mousefunc(int button, int state, int x, int y)
 
 void draw()
 {
+  static int  frame = 0;
+  static float time, timebase = 0.0;
+  static float fps = 0.0;
+  frame++;
+      time=glutGet(GLUT_ELAPSED_TIME);
 
+      if (time - timebase > 1000) {
+          fps = (float)frame*1000.0/(time-timebase);
+           timebase = time;
+          frame = 0;
+      }
+//     std::stringstream ss;
+//      ss<<"FPS : " << fps;
+//      string out = ss.str();
+//      QString qstr = QString::fromStdString(out);
+//     QGLWidget::renderText(100, 100,  qstr );
+      cout<< "FPS: " << fps<<endl;
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   /*
@@ -197,6 +214,9 @@ particles = cloths[0]->getp();
       glEnd();
   }*/
 
+  if(finish)
+    glFinish();
+  else
    glutSwapBuffers();
 //   glDisable(GL_TEXTURE_2D);
 }
