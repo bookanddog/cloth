@@ -1,5 +1,15 @@
 #include "cloth.h"
 
+Vector3 computeNorml(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3)
+{
+  Vector3 ret;
+//  Vector3 temp1 = particles.at(index(u, v)).position - particles.at(index(u + 1, v)).position;
+   Vector3 temp1 = p1 - p2;
+  Vector3 temp2 = p2 - p3;
+  ret = temp1.crossProduct(temp2).normalize();
+  return ret;
+}
+
 cloth::cloth():height(10),width(10),DAMPING(0.03),DRAG(1 - DAMPING),MASS(0.1),restDistance(25),xSegs(10),ySegs(10),GRAVITY(981 * 1.4),gravity(Vector3(0.0, -GRAVITY, 0.0) * MASS),TIMESTEP((float)18 / 1000),TIMESTEP_SQ(TIMESTEP * TIMESTEP)
 {
   int temp_arr[10] = {0,1,2,3,4, 5,6, 7,8,9};
@@ -16,6 +26,16 @@ int cloth::index(int u, int v)
 {
 //  return u + v * ( w + 1 );
   return u + v * ( xSegs );
+}
+
+Vector3 cloth::getballp()
+{
+  return balls.getposition();
+}
+
+float cloth::getballs()
+{
+  return balls.getsize();
 }
 
 void cloth::simulate(time_t time)
@@ -111,22 +131,22 @@ void cloth::crt_cloth(float w, float h)
    }
    for (int v = 0; v < h -1; v ++ ) {
           for ( int u = 0; u < w -1; u ++ ) {
-                          constrains.push_back(constrain( &particles.at(index( u, v )), &particles.at(index( u, v + 1)), restDistance));
+                          constrains.push_back(constrain( &(particles.at(index( u, v ))), &(particles.at(index( u, v + 1))), restDistance));
 //                              constrains.push( [particles[ index( u, v ) ],particles[ index( u, v + 1 ) ],restDistance] );
 
-                           constrains.push_back(constrain( &particles.at(index( u, v )), &particles.at(index( u + 1, v )), restDistance));
+                           constrains.push_back(constrain( &(particles.at(index( u, v ))), &(particles.at(index( u + 1, v ))), restDistance));
 
               }
 
      }
 
    for ( int u = w -1, v = 0; v < h -1; v ++ ) {
-constrains.push_back(constrain( &particles.at(index( u, v )), &particles.at(index( u, v + 1)), restDistance));
+constrains.push_back(constrain( &(particles.at(index( u, v ))), &(particles.at(index( u, v + 1))), restDistance));
 
            }
 
            for (int  v = h -1, u = 0; u < w -1; u ++ ) {
-constrains.push_back(constrain( &particles.at(index( u, v )), &particles.at(index( u + 1, v )), restDistance));
+constrains.push_back(constrain( &(particles.at(index( u, v ))), &(particles.at(index( u + 1, v ))), restDistance));
 
            }
            /*share springs

@@ -46,6 +46,6 @@ void Particle::integrate(float timesq, float DRAG)
 
 Vector3 Particle::clothFunction(float x, float y,float restDistance, float xSegs, float ySegs )
 {
-  return Vector3((x - 0.5) * (restDistance  * xSegs), (y + 0.5) *  (restDistance  * xSegs), 0);
+  return Vector3((x - 0.5) * (restDistance  * xSegs), (y + 0.5) *  (restDistance  * ySegs), 0);
 }
 

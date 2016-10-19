@@ -1,4 +1,5 @@
 #include "ball.h"
+#include<math.h>
 
 ball::ball():have(true), position(Vector3(0.0, -45, 0.0)),size(60),alpha(0)
 {

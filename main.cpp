@@ -9,17 +9,20 @@
 
 #include <GL/freeglut.h>
 #include <GL/glu.h>
+#include "cloth.h"
 
 #include "particle.h"
 #include "constrain.h"
 #include "camera.h"
 #include "key.h"
 
+
 using namespace std;
 
-vector<Particle> particles;
-vector<constrain> constrains;
+/*布料类 */
+vector<cloth *> cloths;
 
+float height,width;/*gl窗口大小*/
 //mouse
 int posx,posy;
 
@@ -28,48 +31,14 @@ Camera camera;
 //key
 Keys keys;
 
-//sphere
-Vector3 ballPosition(0.0, -45, 0.0);
-bool ball = true;
-float ballSize = 60;
-float alpha = 0;//ball move
-
-//wind
-bool wind = true;
-float windStrength = 2;//风力数值
-Vector3 windForce;
-
-int pins[10] = {0,1,2,3,4, 5,6, 7,8,9};
-//int pins[10] = {0,9};
-float height, width;
-float DAMPING = 0.03; //阻尼
-float DRAG = 1 - DAMPING;//拖拉，阻力//这个是弹性系数k？/不知道干什么用
-float MASS = 0.1;  //质量，集中。所以是质心？m
-float restDistance = 25;//初始距离
-float xSegs = 10;
-float ySegs = 10;
-float GRAVITY = 981 * 1.4;  //引力大小
-Vector3 gravity = Vector3(0.0, -GRAVITY, 0.0) * MASS;
-float TIMESTEP = (float)18 / 1000;//时间间隔
-float TIMESTEP_SQ = TIMESTEP * TIMESTEP;//时间间隔平方
-
 GLuint tex_id;
-
-
-//void satisifyConstrains(Particle &p1, Particle &p2, float distance);
-int index(int u, int v);//返回质点的位置
-Vector3 computeNorml(const Vector3 &p1, const Vector3 &p2,const Vector3 &p3);//计算法向量
 
 void timefunc(int i);//刷新画面
 void setLight(); //设置光源
 void reshape(GLsizei w,GLsizei h);//
 
-/****主要的直接调用的函数****/
-void cloth(float w, float h);//创建布料的模型，包括质点与约束
 void glInit();//初始化，以及cloth函数调用，创建布料
 void draw();//绘制的回调函数，调用simulate函数，计算质点位置，将数据绘制出来。
-
-void simulate(time_t time);//计算当前时刻各个质点的合力，具体根据力计算质点位置并进行约束
 
 //键盘与鼠标函数
 void keyfunc(unsigned char key, int x, int y);
@@ -99,8 +68,20 @@ int main(int argc,char ** argv)
 //    glutKeyboardFunc(keyfunc);
 //    glutKeyboardUpFunc(keyupfunc);
 
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);//使程序在mainloop结束之后继续执行之后的代码。
   glutMainLoop();
 
+  cout<<endl;
+  cout<<cloths[0]<<endl;
+  cout<<cloths[0]->getx()<<endl;
+for(int i = 0; i < cloths.size(); ++i)
+  {
+    delete cloths[i];
+  }
+cout<<endl;
+cout<<cloths[0]<<endl;
+cout<<cloths[0]->getx()<<endl;
+cout<< "after glMainLoop, delete the cloth mem"<<endl;
   return 0;
 }
 
@@ -123,6 +104,7 @@ void draw()
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  /*
 //  time_t t = time(NULL);//time sec from 1970.1.1 0:0:0
   struct timeb t1;
   ftime(&t1);
@@ -140,22 +122,40 @@ void draw()
   ballPosition.x = cos( alpha  )* 70;
 
   simulate(t);
-
+  */
+ struct timeb t1;
+ ftime(&t1);
+ long t =  t1.time * 1000 + t1.millitm;
+ cloths[0]->simulate(t);
   //texture envirement
 //  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 //    glEnable(GL_TEXTURE_2D);
 //    glBindTexture(GL_TEXTURE_2D, tex_id);
 
-  for(int i = 0; i < 10 - 1; ++i)
+ /* 传递cloth中的质点类，有问题，用共有成员暂时解决
+vector<Particle> particles;
+particles = cloths[0]->getp();
+*/
+ glColor3f(1.0, 1.0, 1.0);
+               glPushMatrix();
+               Vector3 bp = cloths[0]->getballp();
+               glTranslatef(bp.x, bp.y, bp.z);
+               double ballsize = cloths[0]->getballs();
+               glutSolidSphere(ballsize ,20,20);
+               glPopMatrix();
+
+  for(int i = 0; i < cloths[0]->getx() - 1; ++i)
     {
       glBegin(GL_TRIANGLE_STRIP);
-      for(int j = 0; j < 10; j ++)
+      for(int j = 0; j < cloths[0]->gety(); j ++)
         {
           glTexCoord2f(i * 0.1, j * 0.1); //it should be i * 1 / 11 i think for there are 11 coord,
-           glVertex3f(particles.at(i * 10 + j).position.x, particles.at(i * 10 + j).position.y,particles.at(i * 10 + j).position.z);
+          Vector3 p = cloths[0]->particles[i * 10 + j].position;
+           glVertex3f(p.x, p.y, p.z);
+//           glVertex3f(cloths[0]->particles.at(i * 10 + j).position.x, cloths[0]->particles.at(i * 10 + j).position.y, cloths[0]->particles.at(i * 10 + j).position.z);
 
            glTexCoord2f((i+ 1) * 0.1, j * 0.1); //it should be i * 1 / 11 i think for there are 11 coord,
-            glVertex3f(particles.at( (i + 1) * 10 + j).position.x, particles.at((i + 1) * 10 + j).position.y,particles.at((i + 1) * 10 + j).position.z);
+            glVertex3f(cloths[0]->particles.at( (i + 1) * 10 + j).position.x, cloths[0]->particles.at((i + 1) * 10 + j).position.y, cloths[0]->particles.at((i + 1) * 10 + j).position.z);
         }
       glEnd();
     }
@@ -263,7 +263,9 @@ void glInit()
                     glEnable(GL_TEXTURE_2D);
 //                    glBindTexture(GL_TEXTURE_2D, tex_id);
 
-                  cloth(10, 10);
+                  cloth *cloth1 = new cloth;
+                  cloth1->crt_cloth(10, 10);
+                  cloths.push_back(cloth1);
 
                   glColor3f(1.0,1.0,1.0);//设置第一个顶点为红色
 }
@@ -287,140 +289,4 @@ void satisifyConstrains(Particle &p1, Particle &p2, float distance)
 }
 */
 
-int index(int u, int v)
-{
-//  return u + v * ( w + 1 );
-  return u + v * ( 10  );
-}
 
-void cloth(float w, float h)
-{
-  for(int v = 0; v < h; v ++ ) {
-
-      for (int  u = 0; u < w; u ++ ) {
-
-              particles.push_back(Particle( u / w, v / h, 0, MASS,restDistance, xSegs,ySegs ));
-
-        }
-   }
-   for (int v = 0; v < h -1; v ++ ) {
-          for ( int u = 0; u < w -1; u ++ ) {
-                          constrains.push_back(constrain( &particles.at(index( u, v )), &particles.at(index( u, v + 1)), restDistance));
-//                              constrains.push( [particles[ index( u, v ) ],particles[ index( u, v + 1 ) ],restDistance] );
-
-                           constrains.push_back(constrain( &particles.at(index( u, v )), &particles.at(index( u + 1, v )), restDistance));
-
-              }
-
-     }
-
-   for ( int u = w -1, v = 0; v < h -1; v ++ ) {
-constrains.push_back(constrain( &particles.at(index( u, v )), &particles.at(index( u, v + 1)), restDistance));
-
-           }
-
-           for (int  v = h -1, u = 0; u < w -1; u ++ ) {
-constrains.push_back(constrain( &particles.at(index( u, v )), &particles.at(index( u + 1, v )), restDistance));
-
-           }
-           //share springs
-//           float diagonalDist = sqrt(restDistance * restDistance * 2);
-//            for (int v=0;v<h - 1;v++) {
-//                        for (int u=0;u<w - 1;u++) {
-
-//                                constrains.push_back(constrain(&particles.at(index(u, v)), &particles.at(index(u + 1, v + 1)), diagonalDist));
-
-//                                constrains.push_back(constrain(&particles.at(index(u + 1, v)), &particles.at(index(u , v + 1)), diagonalDist));
-
-//                        }
-//                    }
-}
-
-Vector3 computeNorml(const Vector3 &p1, const Vector3 &p2, const Vector3 &p3)
-{
-  Vector3 ret;
-//  Vector3 temp1 = particles.at(index(u, v)).position - particles.at(index(u + 1, v)).position;
-   Vector3 temp1 = p1 - p2;
-  Vector3 temp2 = p2 - p3;
-  ret = temp1.crossProduct(temp2).normalize();
-  return ret;
-}
-void simulate(time_t time)
-{
-
-  if(wind)
-    {
-       Vector3 temp1;
-      for(int u = 0; u < xSegs - 1; ++u)
-        for(int v = 0; v < ySegs -1; ++v)
-          {
-              temp1 = computeNorml(particles.at(index(u, v)).position, particles.at(index(u + 1, v)).position, particles.at(index(u , v + 1)).position);
-              temp1*temp1.dotProduct(windForce);
-
-              particles.at(index(u, v)).addAcceleration(temp1);
-              particles.at(index(u + 1, v)).addAcceleration(temp1);
-              particles.at(index(u, v + 1)).addAcceleration(temp1);
-          }
-      /*
-      for (int i = 0, il = faces.length; i < il; i ++ ) {
-
-                              face = faces[ i ];
-                              normal = face.normal;
-
-                              tmpForce.copy( normal ).normalize().multiplyScalar( normal.dot( windForce ) );//点积。求当前各个面的加速度
-                              particles[ face.a ].addForce( tmpForce );//猜测一下，应该是对于面的各个点的加速度？
-                              particles[ face.b ].addForce( tmpForce );
-                              particles[ face.c ].addForce( tmpForce );
-
-                      }
-                      */
-    }
-
-  //计算加上重力的加速度。然后计算每个点的位置
-          for ( int i = 0; i < particles.size(); i ++ ) {
-
-                  particles.at(i).addAcceleration(gravity);
-//                  particle.addForce( gravity );
-                   particles.at(i).integrate(TIMESTEP_SQ, DRAG);//计算位置
-
-          }
-
-//          for(int i = 0; i < 3; ++i)
-//            {
-          for (int  i = 0; i < constrains.size(); i ++ ) {
-              constrains.at(i).satisifyConstrains();//衣服的约束条件，什么原理呢，先计算每个粒子的位置，再对粒子位置进行调整，满足约束。这个约束自己定义
-
-                  }
-//          }
-
-          for (int i = 0; i < 10; i ++ ) {
-
-                  particles.at(pins[i]).position.set( particles.at(pins[i]).original);
-                   particles.at(pins[i]).previous.set( particles.at(pins[i]).original);
-
-          }
-
-//add ball or not
-          if(ball)
-            {
-
-              glColor3f(1.0, 1.0, 1.0);
-              glPushMatrix();
-              glTranslatef(ballPosition.x, ballPosition.y,ballPosition.z);
-              glutSolidSphere(ballSize,20,20);
-              glPopMatrix();
-              for (int i = 0; i < particles.size(); i ++ ) {
-                  Vector3 diff = particles.at(i).position - ballPosition;
-                                      if ( diff.length() < ballSize + 4) {
-
-                                              // collided/碰撞
-                                              diff.normalize();
-                                              diff*(ballSize + 4);
-                                              particles.at(i).position = ballPosition + diff;
-
-                                      }
-
-                              }
-            }
-
-}

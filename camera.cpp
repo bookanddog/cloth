@@ -1,5 +1,5 @@
 #include <math.h>
-#include "GL/glu.h"
+#include <GL/glu.h>
 #include "camera.h"                    /**< 包含摄像机头文件 */
 #include "vector.h"                    /**< 包含向量类 */
 

@@ -2,9 +2,8 @@
 #define BALL_H
 
 #include<vector.h>
-#include<math.h>
 
-#define M_PI 3.141592653   /*pi*/
+//#define M_PI 3.141592653   /*pi*/
 class ball
 {
 public:
