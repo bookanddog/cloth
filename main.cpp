@@ -22,6 +22,10 @@ using namespace std;
 /*布料类 */
 vector<cloth *> cloths;
 
+/*实验测试数据，控制fps*/
+bool idle = true;
+bool finish = false;
+
 float height,width;/*gl窗口大小*/
 //mouse
 int posx,posy;
@@ -61,6 +65,10 @@ int main(int argc,char ** argv)
   glInit();
   glutReshapeFunc(reshape);
     glutDisplayFunc(draw);
+
+    if(idle)
+      glutIdleFunc(draw);
+    else
     glutTimerFunc(18, timefunc, 1);
 //    glutKeyboardFunc();
 //    glutMouseFunc(mousefunc);
